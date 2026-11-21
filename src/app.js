@@ -8,6 +8,7 @@ import connectPgSimple from "connect-pg-simple";
 import pool from "./config/db.js";
 
 import authRouter from "./routes/auth.routes.js";
+import categoryRouter from "./routes/category.routes.js";
 
 
 const app =
@@ -183,6 +184,17 @@ app.get(
 app.use(
     "/api/auth",
     authRouter
+);
+
+/*
+|--------------------------------------------------------------------------
+| CATEGORIES
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+    "/api/categories",
+    categoryRouter
 );
 
 
