@@ -9,6 +9,7 @@ import pool from "./config/db.js";
 
 import authRouter from "./routes/auth.routes.js";
 import categoryRouter from "./routes/category.routes.js";
+import productRouter from "./routes/product.routes.js";
 
 
 const app =
@@ -195,6 +196,17 @@ app.use(
 app.use(
     "/api/categories",
     categoryRouter
+);
+
+/*
+|--------------------------------------------------------------------------
+| PRODUCTS
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+    "/api/products",
+    productRouter
 );
 
 
