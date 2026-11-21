@@ -1,70 +1,156 @@
+import "dotenv/config";
+
 import express from "express";
+import cors from "cors";
+
+import pool from "./config/db.js";
+
 
 const app = express();
 
-const PORT = 3000;
 
-// ruta get
+/*
+|--------------------------------------------------------------------------
+| CONFIGURACIÓN GENERAL
+|--------------------------------------------------------------------------
+*/
+
+app.disable("x-powered-by");
+
+
+/*
+|--------------------------------------------------------------------------
+| CORS
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+    cors({
+        origin:
+            process.env.FRONTEND_ORIGIN
+            || "http://localhost:5173",
+
+        credentials:
+            true
+    })
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| JSON
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+    express.json()
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| HOME
+|--------------------------------------------------------------------------
+*/
+
 app.get(
     "/",
-    function(req,res){
+    function(req, res) {
+
         res.json({
-            name: "Nexomarket",
-            status: "online" 
+            name:
+                "NexoMarket API",
+
+            status:
+                "online"
         });
+
     }
 );
 
 
-// ruta productos
-app.get(
-    "/api/products",
-    function(req,res){
-        res.json({
-            products: [
-                {
-                    id: 1,
-                    name: "Mouse Pro",
-                    price: 79000
-                },
-                {
-                    id: 2,
-                    name: "Teclado Studio",
-                    price: 150000
-                },
-                {
-                    id: 3,
-                    name: "Audífonos Air",
-                    price: 20000
-                }
-            ],
-            status: "online",
-            total: 3
-        });
-    }
-)
+/*
+|--------------------------------------------------------------------------
+| HEALTH CHECK
+|--------------------------------------------------------------------------
+*/
 
 app.get(
-    "/api/products/:id",
-    function(req,res){
-        console.log(
-            req.params,
-            req.query,
-            req.body
-        )
-    }
-)
+    "/api/health",
+    async function(req, res, next) {
 
-app.listen(
-    PORT,
-    function(){
-        console.log(
-            `Servidor activo en http://localhost:${PORT}`
-        )
+        try {
+
+            const result =
+                await pool.query(
+                    "SELECT NOW() AS database_time"
+                );
+
+
+            res.json({
+                status:
+                    "ok",
+
+                app:
+                    "NexoMarket API",
+
+                database:
+                    "connected",
+
+                database_time:
+                    result.rows[0].database_time
+            });
+
+        } catch (error) {
+
+            next(error);
+
+        }
+
     }
 );
 
 
+/*
+|--------------------------------------------------------------------------
+| 404
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+    function(req, res) {
+
+        res.status(404).json({
+            message:
+                "Endpoint no encontrado."
+        });
+
+    }
+);
 
 
+/*
+|--------------------------------------------------------------------------
+| ERROR HANDLER
+|--------------------------------------------------------------------------
+*/
 
+app.use(
+    function(error, req, res, next) {
+
+        console.error(
+            "API ERROR:",
+            error.message
+        );
+
+
+        res.status(500).json({
+            message:
+                "Ocurrió un error interno en el servidor."
+        });
+
+    }
+);
+
+
+export default app;
