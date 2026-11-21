@@ -2,20 +2,27 @@ import "dotenv/config";
 
 import express from "express";
 import cors from "cors";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 
 import pool from "./config/db.js";
 
+import authRouter from "./routes/auth.routes.js";
 
-const app = express();
+
+const app =
+    express();
 
 
-/*
-|--------------------------------------------------------------------------
-| CONFIGURACIÓN GENERAL
-|--------------------------------------------------------------------------
-*/
+const PostgreSqlSessionStore =
+    connectPgSimple(
+        session
+    );
 
-app.disable("x-powered-by");
+
+app.disable(
+    "x-powered-by"
+);
 
 
 /*
@@ -49,6 +56,62 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
+| SESIONES
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+    session({
+
+        name:
+            "nexomarket.sid",
+
+        store:
+            new PostgreSqlSessionStore({
+                pool:
+                    pool,
+
+                tableName:
+                    "user_sessions",
+
+                createTableIfMissing:
+                    true
+            }),
+
+        secret:
+            process.env.SESSION_SECRET,
+
+        resave:
+            false,
+
+        saveUninitialized:
+            false,
+
+        cookie: {
+
+            httpOnly:
+                true,
+
+            sameSite:
+                "lax",
+
+            secure:
+                process.env.NODE_ENV
+                === "production",
+
+            maxAge:
+                1000
+                * 60
+                * 60
+                * 8
+        }
+
+    })
+);
+
+
+/*
+|--------------------------------------------------------------------------
 | HOME
 |--------------------------------------------------------------------------
 */
@@ -71,7 +134,7 @@ app.get(
 
 /*
 |--------------------------------------------------------------------------
-| HEALTH CHECK
+| HEALTH
 |--------------------------------------------------------------------------
 */
 
@@ -113,6 +176,18 @@ app.get(
 
 /*
 |--------------------------------------------------------------------------
+| AUTH
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+    "/api/auth",
+    authRouter
+);
+
+
+/*
+|--------------------------------------------------------------------------
 | 404
 |--------------------------------------------------------------------------
 */
@@ -120,10 +195,12 @@ app.get(
 app.use(
     function(req, res) {
 
-        res.status(404).json({
-            message:
-                "Endpoint no encontrado."
-        });
+        res
+            .status(404)
+            .json({
+                message:
+                    "Endpoint no encontrado."
+            });
 
     }
 );
@@ -144,10 +221,12 @@ app.use(
         );
 
 
-        res.status(500).json({
-            message:
-                "Ocurrió un error interno en el servidor."
-        });
+        res
+            .status(500)
+            .json({
+                message:
+                    "Ocurrió un error interno en el servidor."
+            });
 
     }
 );
